@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>词汇AI分析报告</title>
+<style>
+  :root {
+    --paper: #f8f1e4;
+    --paper-deep: #efe2cf;
+    --ink: #2b241c;
+    --muted: #6f6256;
+    --accent: #c4684b;
+    --accent-soft: #f2dfd3;
+    --line: #e2d3bf;
+    --surface: rgba(255, 250, 242, 0.92);
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error: #ef4444;
+    --info: #3b82f6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Georgia', -apple-system, 'STKaiti', 'Kaiti SC', 'KaiTi', serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.7;
+    padding: 24px;
+  }
+  .report-container { max-width: 900px; margin: 0 auto; }
+
+  /* Header */
+  .report-header {
+    text-align: center;
+    padding: 32px 24px;
+    background: linear-gradient(135deg, rgba(196,104,75,0.08), rgba(102,126,234,0.06));
+    border-radius: 16px;
+    margin-bottom: 32px;
+    border: 1px solid var(--line);
+  }
+  .report-header h1 { font-size: 1.8em; margin-bottom: 8px; }
+  .report-header .meta { color: var(--muted); font-size: 0.9em; }
+
+  /* Section */
+  .report-section {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    border: 1px solid var(--line);
+  }
+  .report-section h2 {
+    font-size: 1.3em;
+    color: var(--accent);
+    border-bottom: 2px solid var(--accent-soft);
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+  }
+  .report-section h3 {
+    font-size: 1.1em;
+    margin: 16px 0 8px;
+    color: var(--ink);
+  }
+
+  /* Summary cards */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .summary-card {
+    background: white;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    border: 1px solid var(--line);
+  }
+  .summary-card .value {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: var(--accent);
+  }
+  .summary-card .label { font-size: 0.85em; color: var(--muted); margin-top: 4px; }
+
+  /* Level badge */
+  .level-badge {
+    display: inline-block;
+    padding: 6px 18px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 1em;
+    margin: 8px 0;
+  }
+  .level-weak { background: #fef2f2; color: var(--error); }
+  .level-below-average { background: #fffbeb; color: var(--warning); }
+  .level-average { background: #eff6ff; color: var(--info); }
+  .level-above-average { background: #f0fdf4; color: var(--success); }
+
+  /* Distribution bars */
+  .dist-bar-row { display: flex; align-items: center; margin-bottom: 6px; }
+  .dist-bar-label { width: 100px; font-size: 0.9em; color: var(--muted); flex-shrink: 0; }
+  .dist-bar-track { flex: 1; height: 20px; background: var(--paper-deep); border-radius: 10px; overflow: hidden; }
+  .dist-bar-fill { height: 100%; border-radius: 10px; transition: width 0.4s; }
+  .dist-bar-value { width: 50px; text-align: right; font-size: 0.85em; color: var(--muted); flex-shrink: 0; }
+
+  /* Word analysis cards */
+  .word-card {
+    background: white;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--accent);
+  }
+  .word-card .word-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .word-card .word-text { font-size: 1.15em; font-weight: bold; }
+  .word-card .error-badge {
+    font-size: 0.8em;
+    padding: 2px 10px;
+    border-radius: 12px;
+    background: #fef2f2;
+    color: var(--error);
+  }
+  .word-card .difficulty-easy { border-left-color: var(--success); }
+  .word-card .difficulty-medium { border-left-color: var(--warning); }
+  .word-card .difficulty-hard { border-left-color: var(--error); }
+  .word-card p { font-size: 0.9em; color: var(--muted); margin-bottom: 4px; }
+  .word-card .tip { color: var(--accent); font-style: italic; }
+
+  /* Weak points */
+  .weak-point {
+    background: white;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 1px solid var(--line);
+  }
+  .weak-point .severity-high { color: var(--error); font-weight: bold; }
+  .weak-point .severity-medium { color: var(--warning); font-weight: bold; }
+  .weak-point .severity-low { color: var(--info); font-weight: bold; }
+
+  /* Study plan */
+  .plan-phase { margin-bottom: 16px; }
+  .plan-phase h4 { color: var(--accent); margin-bottom: 6px; }
+  .plan-phase ul { padding-left: 20px; }
+  .plan-phase li { font-size: 0.9em; margin-bottom: 3px; }
+
+  /* Suggestions */
+  .suggestion-item {
+    background: white;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    border-left: 3px solid var(--accent);
+    font-size: 0.9em;
+  }
+  .suggestion-item .priority-high { color: var(--error); font-weight: bold; }
+  .suggestion-item .priority-medium { color: var(--warning); font-weight: bold; }
+  .suggestion-item .priority-low { color: var(--info); font-weight: bold; }
+
+  /* Action button */
+  .action-bar {
+    text-align: center;
+    padding: 24px;
+    margin-top: 24px;
+  }
+  .btn-generate-paper {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 14px 36px;
+    border-radius: 12px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .btn-generate-paper:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(102,126,234,0.3);
+  }
+
+  /* Loading & error */
+  .loading-state, .error-state {
+    text-align: center;
+    padding: 60px 24px;
+    color: var(--muted);
+  }
+  .loading-state .spinner {
+    width: 40px; height: 40px;
+    border: 4px solid var(--line);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error-state { color: var(--error); }
+
+  /* Dark theme */
+  @media (prefers-color-scheme: dark) {
+    .bloom-dark-mode &,
+    .bloom-dark-mode {
+      --paper: #1a1a2e;
+      --paper-deep: #16213e;
+      --ink: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #e07a5f;
+      --accent-soft: rgba(224,122,95,0.15);
+      --line: #334155;
+      --surface: rgba(30,41,59,0.92);
+      --success: #34d399;
+      --warning: #fbbf24;
+      --error: #f87171;
+      --info: #60a5fa;
+    }
+  }
+  body.bloom-dark-mode {
+    --paper: #1a1a2e;
+    --paper-deep: #16213e;
+    --ink: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #e07a5f;
+    --accent-soft: rgba(224,122,95,0.15);
+    --line: #334155;
+    --surface: rgba(30,41,59,0.92);
+  }
+  body.bloom-dark-mode .summary-card,
+  body.bloom-dark-mode .word-card,
+  body.bloom-dark-mode .weak-point,
+  body.bloom-dark-mode .suggestion-item {
+    background: #1e293b;
+    border-color: #334155;
+  }
+</style>
+</head>
+<body>
+<div class="report-container" id="report-root">
+  <div class="loading-state" id="loading-state">
+    <div class="spinner"></div>
+    <p>正在加载分析报告...</p>
+  </div>
+  <div class="error-state" id="error-state" style="display:none">
+    <p>加载分析报告失败，请关闭此窗口重试。</p>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  var DB_NAME = 'ielts_vocab_analysis';
+  var STORE_NAME = 'vocab_analysis_results';
+  var DB_VERSION = 1;
+
+  function getAnalysisId() {
+    var params = new URLSearchParams(window.location.search);
+    return params.get('analysisId');
+  }
+
+  function openDB() {
+    return new Promise(function(resolve, reject) {
+      var request = indexedDB.open(DB_NAME, DB_VERSION);
+      request.onupgradeneeded = function(e) {
+        var db = e.target.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          var store = db.createObjectStore(STORE_NAME, { keyPath: 'analysisId' });
+          store.createIndex('analyzedAt', 'analyzedAt', { unique: false });
+        }
+      };
+      request.onsuccess = function(e) { resolve(e.target.result); };
+      request.onerror = function(e) { reject(e.target.error); };
+    });
+  }
+
+  function getResult(analysisId) {
+    return openDB().then(function(db) {
+      return new Promise(function(resolve, reject) {
+        var tx = db.transaction(STORE_NAME, 'readonly');
+        var store = tx.objectStore(STORE_NAME);
+        var req = store.get(analysisId);
+        req.onsuccess = function() { resolve(req.result || null); };
+        req.onerror = function() { resolve(null); };
+      });
+    });
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function renderReport(data) {
+    var p = data.parsed;
+
+    // If parsed is null but we have raw content, try to display it
+    if (!p && data.raw) {
+      var html = '';
+      html += '<div class="report-header">';
+      html += '<h1>📖 词汇AI分析报告</h1>';
+      html += '<div class="meta">分析范围：' + escapeHtml(data.scope || '全局') + ' | 分析时间：' + (data.analyzedAt ? new Date(data.analyzedAt).toLocaleString() : '未知') + '</div>';
+      html += '</div>';
+      html += '<div class="report-section"><h2>⚠️ 报告解析失败</h2>';
+      html += '<p>AI返回的JSON格式无法完全解析。以下为原始内容（可能部分可读）：</p>';
+      html += '<pre style="background:#fff;padding:16px;border-radius:8px;overflow-x:auto;white-space:pre-wrap;font-size:0.85em;max-height:600px;border:1px solid var(--line)">' + escapeHtml(data.raw) + '</pre>';
+      html += '<div class="action-bar">';
+      html += '<button class="btn-generate-paper" id="btn-generate-paper">📝 生成定制测试卷</button>';
+      html += '</div>';
+      html += '</div>';
+      return html;
+    }
+
+    if (!p) return renderError('分析数据格式异常');
+
+    var html = '';
+
+    // Header
+    html += '<div class="report-header">';
+    html += '<h1>📖 词汇AI分析报告</h1>';
+    html += '<div class="meta">分析范围：' + escapeHtml(data.scope || '全局') + ' | 候选词数：' + (data.candidateCount || 0) + ' | 分析时间：' + (data.analyzedAt ? new Date(data.analyzedAt).toLocaleString() : '未知') + '</div>';
+    html += '</div>';
+
+    // Summary
+    if (p.summary) {
+      var s = p.summary;
+      html += '<div class="report-section"><h2>📊 综合评估</h2>';
+      html += '<div class="summary-grid">';
+      html += '<div class="summary-card"><div class="value">' + (s.totalWords || 0) + '</div><div class="label">总词数</div></div>';
+      html += '<div class="summary-card"><div class="value">' + (s.masteredCount || 0) + '</div><div class="label">已掌握</div></div>';
+      html += '<div class="summary-card"><div class="value">' + (s.learningCount || 0) + '</div><div class="label">学习中</div></div>';
+      html += '<div class="summary-card"><div class="value">' + ((s.errorRate != null) ? (s.errorRate * 100).toFixed(1) + '%' : 'N/A') + '</div><div class="label">错误率</div></div>';
+      html += '</div>';
+
+      var level = s.overallLevel || 'average';
+      var levelLabels = { weak: '薄弱', 'below-average': '中下', average: '中等', 'above-average': '中上' };
+      html += '<div style="text-align:center;margin:8px 0">';
+      html += '<span class="level-badge level-' + level + '">' + (levelLabels[level] || level) + '</span>';
+      html += '</div>';
+
+      if (s.overallLevelDescription) {
+        html += '<p style="text-align:center;color:var(--muted);font-size:0.95em">' + escapeHtml(s.overallLevelDescription) + '</p>';
+      }
+      if (s.keyInsight) {
+        html += '<p style="text-align:center;margin-top:8px;font-style:italic;color:var(--accent)">' + escapeHtml(s.keyInsight) + '</p>';
+      }
+      html += '</div>';
+    }
+
+    // Pattern Analysis
+    if (p.patternAnalysis) {
+      var pa = p.patternAnalysis;
+      html += '<div class="report-section"><h2>📈 错误模式分析</h2>';
+
+      // Error type distribution
+      if (pa.errorTypeDistribution) {
+        html += '<h3>错误类型分布</h3>';
+        var etd = pa.errorTypeDistribution;
+        var etdMax = 0;
+        for (var k in etd) { if (etd[k] > etdMax) etdMax = etd[k]; }
+        if (etdMax === 0) etdMax = 1;
+        var barColors = ['#ef4444','#f59e0b','#3b82f6','#8b5cf6','#ec4899','#10b981','#06b6d4','#f97316'];
+        var ci = 0;
+        for (var k in etd) {
+          var pct = (etd[k] / etdMax * 100).toFixed(1);
+          html += '<div class="dist-bar-row">';
+          html += '<div class="dist-bar-label">' + escapeHtml(k) + '</div>';
+          html += '<div class="dist-bar-track"><div class="dist-bar-fill" style="width:' + pct + '%;background:' + barColors[ci % barColors.length] + '"></div></div>';
+          html += '<div class="dist-bar-value">' + etd[k] + '</div>';
+          html += '</div>';
+          ci++;
+        }
+      }
+
+      // Mastery distribution
+      if (pa.masteryDistribution) {
+        html += '<h3>掌握度分布</h3>';
+        var md = pa.masteryDistribution;
+        var mdTotal = (md.new || 0) + (md.learning || 0) + (md.reviewing || 0) + (md.mastered || 0);
+        if (mdTotal === 0) mdTotal = 1;
+        var mdLabels = { new: '新词', learning: '学习中', reviewing: '复习中', mastered: '已掌握' };
+        var mdColors = { new: '#94a3b8', learning: '#f59e0b', reviewing: '#3b82f6', mastered: '#10b981' };
+        for (var mk in mdLabels) {
+          var mpct = ((md[mk] || 0) / mdTotal * 100).toFixed(1);
+          html += '<div class="dist-bar-row">';
+          html += '<div class="dist-bar-label">' + mdLabels[mk] + '</div>';
+          html += '<div class="dist-bar-track"><div class="dist-bar-fill" style="width:' + mpct + '%;background:' + mdColors[mk] + '"></div></div>';
+          html += '<div class="dist-bar-value">' + (md[mk] || 0) + '</div>';
+          html += '</div>';
+        }
+      }
+
+      if (pa.patternSummary) {
+        html += '<p style="margin-top:12px;font-size:0.9em;color:var(--muted)">' + escapeHtml(pa.patternSummary) + '</p>';
+      }
+      html += '</div>';
+    }
+
+    // Word analyses
+    if (p.wordAnalyses && p.wordAnalyses.length > 0) {
+      html += '<div class="report-section"><h2>📝 逐词精析</h2>';
+      p.wordAnalyses.forEach(function(w) {
+        var diffClass = 'difficulty-' + (w.difficulty || 'medium');
+        html += '<div class="word-card ' + diffClass + '">';
+        html += '<div class="word-header">';
+        html += '<span class="word-text">' + escapeHtml(w.word) + '</span>';
+        html += '<span class="error-badge">' + escapeHtml(w.errorType || '未知') + ' | 错' + (w.errorCount || 0) + '次 | 复习' + (w.reviewCount || 0) + '次</span>';
+        html += '</div>';
+        if (w.analysis) html += '<p><strong>分析：</strong>' + escapeHtml(w.analysis) + '</p>';
+        if (w.tip) html += '<p class="tip">💡 ' + escapeHtml(w.tip) + '</p>';
+        if (w.relatedWords && w.relatedWords.length > 0) html += '<p>关联词：' + w.relatedWords.map(escapeHtml).join('、') + '</p>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // Weak points
+    if (p.weakPoints && p.weakPoints.length > 0) {
+      html += '<div class="report-section"><h2>⚠️ 薄弱类别诊断</h2>';
+      p.weakPoints.forEach(function(wp) {
+        html += '<div class="weak-point">';
+        html += '<h3><span class="severity-' + (wp.severity || 'medium') + '">' + escapeHtml(wp.point) + '</span></h3>';
+        if (wp.description) html += '<p>' + escapeHtml(wp.description) + '</p>';
+        if (wp.rootCause) html += '<p><strong>根因：</strong>' + escapeHtml(wp.rootCause) + '</p>';
+        if (wp.impact) html += '<p><strong>影响：</strong>' + escapeHtml(wp.impact) + '</p>';
+        if (wp.affectedWords && wp.affectedWords.length > 0) html += '<p style="font-size:0.85em;color:var(--muted)">涉及词：' + wp.affectedWords.map(escapeHtml).join('、') + '</p>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // Study plan
+    if (p.studyPlan) {
+      var sp = p.studyPlan;
+      html += '<div class="report-section"><h2>📅 分阶段学习计划</h2>';
+      var phases = [
+        { key: 'shortTerm', label: '短期计划' },
+        { key: 'midTerm', label: '中期计划' },
+        { key: 'longTerm', label: '长期计划' }
+      ];
+      phases.forEach(function(ph) {
+        var plan = sp[ph.key];
+        if (!plan) return;
+        html += '<div class="plan-phase">';
+        html += '<h4>' + ph.label + '（' + escapeHtml(plan.period || '') + '）</h4>';
+        if (plan.goals && plan.goals.length > 0) {
+          html += '<p><strong>目标：</strong></p><ul>';
+          plan.goals.forEach(function(g) { html += '<li>' + escapeHtml(g) + '</li>'; });
+          html += '</ul>';
+        }
+        if (plan.actions && plan.actions.length > 0) {
+          html += '<p><strong>行动：</strong></p><ul>';
+          plan.actions.forEach(function(a) { html += '<li>' + escapeHtml(a) + '</li>'; });
+          html += '</ul>';
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // Suggestions
+    if (p.suggestions && p.suggestions.length > 0) {
+      html += '<div class="report-section"><h2>💡 改进建议</h2>';
+      p.suggestions.forEach(function(sug) {
+        html += '<div class="suggestion-item">';
+        html += '<span class="priority-' + (sug.priority || 'medium') + '">[' + (sug.priority || 'medium') + ']</span> ';
+        html += '<strong>' + escapeHtml(sug.target || '') + '</strong> - ' + escapeHtml(sug.method || '');
+        if (sug.direction) html += ' → ' + escapeHtml(sug.direction);
+        if (sug.notes) html += ' <em>(' + escapeHtml(sug.notes) + ')</em>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // Generate custom paper button
+    html += '<div class="action-bar">';
+    html += '<button class="btn-generate-paper" id="btn-generate-paper">📝 生成定制测试卷</button>';
+    html += '</div>';
+
+    return html;
+  }
+
+  function renderError(msg) {
+    return '<div class="error-state"><p>' + escapeHtml(msg) + '</p></div>';
+  }
+
+  function init() {
+    var analysisId = getAnalysisId();
+    if (!analysisId) {
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('error-state').style.display = 'block';
+      document.getElementById('error-state').querySelector('p').textContent = '缺少分析ID参数，请从单词页面重新打开报告。';
+      return;
+    }
+
+    // Apply dark mode from parent window
+    try {
+      if (window.opener && window.opener.document && window.opener.document.body.classList.contains('bloom-dark-mode')) {
+        document.body.classList.add('bloom-dark-mode');
+      }
+    } catch(e) {}
+
+    getResult(analysisId).then(function(data) {
+      document.getElementById('loading-state').style.display = 'none';
+      if (!data || !data.parsed) {
+        document.getElementById('error-state').style.display = 'block';
+        return;
+      }
+      var root = document.getElementById('report-root');
+      root.innerHTML = renderReport(data);
+
+      // Bind generate paper button
+      var btn = document.getElementById('btn-generate-paper');
+      if (btn) {
+        btn.addEventListener('click', function() {
+          btn.disabled = true;
+          btn.textContent = '⏳ 正在生成测试卷...';
+          try {
+            var vocabAI = window.opener && window.opener.VocabAI;
+            if (vocabAI && typeof vocabAI.generateCustomPaper === 'function') {
+              vocabAI.generateCustomPaper(analysisId, { questionCount: 20 }).then(function(quizResult) {
+                btn.textContent = '✅ 生成成功！';
+                if (window.opener && window.opener.VocabMainView) {
+                  var sessionId = quizResult && quizResult.session && quizResult.session.sessionId;
+                  window.opener.VocabMainView.switchSubView('quiz', sessionId);
+                  window.opener.focus();
+                }
+                setTimeout(function() { window.close(); }, 1000);
+              }).catch(function(err) {
+                alert('生成定制测试卷失败: ' + (err.message || err));
+                btn.disabled = false;
+                btn.textContent = '📝 生成定制测试卷';
+              });
+            } else {
+              alert('请从单词页面重新操作以生成定制测试卷。');
+              btn.disabled = false;
+              btn.textContent = '📝 生成定制测试卷';
+            }
+          } catch(e) {
+            alert('操作失败: ' + e.message);
+            btn.disabled = false;
+            btn.textContent = '📝 生成定制测试卷';
+          }
+        });
+      }
+    }).catch(function(err) {
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('error-state').style.display = 'block';
+      document.getElementById('error-state').querySelector('p').textContent = '加载失败: ' + (err.message || err);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>

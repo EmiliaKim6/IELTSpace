@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 分析报告</title>
+<style>
+:root {
+    --color-white: #ffffff;
+    --color-gray-50: #f9fafb;
+    --color-gray-100: #f3f4f6;
+    --color-gray-200: #e5e7eb;
+    --color-gray-300: #d1d5db;
+    --color-gray-400: #9ca3af;
+    --color-gray-500: #6b7280;
+    --color-gray-600: #4b5563;
+    --color-gray-700: #374151;
+    --color-gray-800: #1f2937;
+    --color-gray-900: #111827;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: var(--font-sans);
+    background: var(--color-gray-50);
+    color: var(--color-gray-900);
+    line-height: 1.6;
+}
+.report-header {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    padding: 24px 32px;
+}
+.report-header h1 { font-size: 20px; font-weight: 700; }
+.report-header .report-subtitle { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+.report-container { max-width: 800px; margin: 0 auto; padding: 24px; }
+.report-section { margin-bottom: 24px; background: var(--color-white); border-radius: 12px; border: 1px solid var(--color-gray-200); overflow: hidden; }
+.report-section h4 { padding: 12px 16px; font-size: 15px; font-weight: 600; border-bottom: 1px solid var(--color-gray-200); background: var(--color-gray-50); }
+
+.summary-box { padding: 16px; background: linear-gradient(135deg, #eff6ff, #f0f9ff); border-radius: 8px; margin: 12px; }
+.summary-level { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 6px; }
+.summary-level-label { font-size: 22px; font-weight: 700; }
+.summary-level-text { font-size: 13px; color: var(--color-gray-500); }
+.summary-insight { font-size: 14px; font-weight: 600; margin: 8px 0; color: #1e40af; }
+.summary-desc { font-size: 13px; color: var(--color-gray-600); line-height: 1.6; }
+.summary-meta { font-size: 12px; color: var(--color-gray-400); margin-top: 6px; }
+
+.chart { margin: 12px 16px; }
+.chart-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.chart-label { width: 80px; font-size: 12px; text-align: right; flex-shrink: 0; color: var(--color-gray-500); }
+.chart-bar-wrap { flex: 1; height: 16px; background: var(--color-gray-100); border-radius: 4px; overflow: hidden; }
+.chart-bar { height: 100%; background: linear-gradient(90deg, #6366f1, #8b5cf6); border-radius: 4px; }
+.chart-val { width: 24px; font-size: 12px; font-weight: 600; color: var(--color-gray-700); }
+.chart-summary { font-size: 13px; color: var(--color-gray-600); line-height: 1.5; margin: 8px 16px; }
+.top-errors { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 16px; }
+.top-error-chip { display: inline-block; padding: 2px 8px; background: #fef3c7; color: #92400e; border-radius: 10px; font-size: 11px; font-weight: 500; }
+
+.question-card { padding: 12px 16px; border-left: 3px solid #6366f1; background: rgba(99,102,241,0.04); margin: 8px 12px; border-radius: 0 8px 8px 0; }
+.question-header { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.q-id { font-weight: 600; font-size: 14px; }
+.q-type { font-size: 12px; color: var(--color-gray-500); background: var(--color-gray-100); padding: 1px 6px; border-radius: 4px; }
+.difficulty-chip { font-size: 11px; color: #fff; padding: 1px 6px; border-radius: 4px; font-weight: 600; }
+.q-answers { display: flex; gap: 12px; font-size: 13px; margin: 4px 0; }
+.q-user strong { color: #dc2626; }
+.q-correct strong { color: #16a34a; }
+.q-labels { display: flex; gap: 4px; flex-wrap: wrap; margin: 4px 0; }
+.label-chip { display: inline-block; padding: 2px 8px; background: rgba(99,102,241,0.1); color: #4f46e5; border-radius: 10px; font-size: 11px; }
+.q-analysis { font-size: 13px; color: var(--color-gray-700); line-height: 1.5; margin-top: 4px; }
+.q-original { font-size: 12px; color: #6366f1; background: rgba(99,102,241,0.06); padding: 4px 8px; border-radius: 4px; margin-top: 4px; }
+.q-tip { font-size: 12px; color: #059669; margin-top: 4px; }
+
+.weak-point { padding: 12px 16px; border-bottom: 1px solid var(--color-gray-100); }
+.weak-point:last-child { border-bottom: none; }
+.wp-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.severity { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; color: #fff; }
+.severity--high { background: #dc2626; }
+.severity--medium { background: #f59e0b; }
+.severity--low { background: #16a34a; }
+.wp-point { font-weight: 600; font-size: 14px; }
+.wp-desc { font-size: 13px; color: var(--color-gray-600); }
+.wp-root { font-size: 12px; color: #92400e; margin-top: 2px; }
+.wp-impact { font-size: 12px; color: #dc2626; margin-top: 2px; }
+.wp-refs { font-size: 12px; color: var(--color-gray-400); margin-top: 2px; }
+
+.plan-phase { padding: 12px 16px; border-bottom: 1px solid var(--color-gray-100); }
+.plan-phase:last-child { border-bottom: none; }
+.plan-header { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.plan-goals, .plan-actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+.plan-goal { font-size: 12px; color: #16a34a; }
+.plan-action { font-size: 12px; color: var(--color-gray-600); }
+
+.suggestion { padding: 12px 16px; border-bottom: 1px solid var(--color-gray-100); }
+.suggestion:last-child { border-bottom: none; }
+.priority-chip { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 11px; color: #fff; font-weight: 600; margin-right: 6px; }
+.sug-target { font-weight: 600; font-size: 13px; }
+.sug-method, .sug-dir { font-size: 13px; color: var(--color-gray-600); margin-top: 2px; }
+.sug-notes { font-size: 12px; color: var(--color-gray-400); margin-top: 2px; }
+
+.retry-btn { display: block; margin: 12px auto; padding: 8px 20px; background: #6366f1; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
+.retry-btn:hover { background: #4f46e5; }
+
+.loading { text-align: center; padding: 60px 20px; color: var(--color-gray-500); }
+.spinner { width: 36px; height: 36px; border: 3px solid var(--color-gray-200); border-top-color: #6366f1; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.error-box { text-align: center; padding: 40px 20px; color: #dc2626; }
+.error-box p { margin-bottom: 12px; }
+
+.empty { text-align: center; padding: 60px 20px; color: var(--color-gray-400); }
+</style>
+</head>
+<body>
+<div id="report-content">
+    <div class="loading"><div class="spinner"></div><p>正在加载分析报告...</p></div>
+</div>
+
+<script>
+(function() {
+    var params = new URLSearchParams(window.location.search);
+    var examId = params.get('examId') || '';
+    var isAll = examId === '__all_exams__';
+
+    function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+    function renderReport(p) {
+        var html = '';
+
+        html += '<div class="report-header">';
+        html += '<h1>📊 ' + esc(isAll ? '全部错题综合分析报告' : 'AI 分析报告') + '</h1>';
+        html += '</div>';
+        html += '<div class="report-container">';
+
+        if (p.summary) {
+            var levelColors = { weak: '#dc2626', 'below-average': '#f59e0b', average: '#3b82f6', 'above-average': '#16a34a' };
+            var levelLabels = { weak: '较弱', 'below-average': '偏下', average: '中等', 'above-average': '较好' };
+            var lc = levelColors[p.summary.overallLevel] || '#6b7280';
+            var ll = levelLabels[p.summary.overallLevel] || p.summary.overallLevel || '未知';
+            html += '<div class="report-section"><h4>📋 综合评估</h4>';
+            html += '<div class="summary-box">';
+            html += '<div class="summary-level" style="border-left:4px solid ' + lc + '"><span class="summary-level-label" style="color:' + lc + '">' + esc(ll) + '</span><span class="summary-level-text">整体阅读能力</span></div>';
+            if (p.summary.keyInsight) html += '<div class="summary-insight">💡 ' + esc(p.summary.keyInsight) + '</div>';
+            if (p.summary.overallLevelDescription) html += '<div class="summary-desc">' + esc(p.summary.overallLevelDescription) + '</div>';
+            if (p.summary.examCount > 1) html += '<div class="summary-meta">涵盖 ' + p.summary.examCount + ' 套试卷 · 共 ' + (p.summary.totalQuestions || 0) + ' 道错题</div>';
+            html += '</div></div>';
+        }
+
+        if (p.patternAnalysis) {
+            var pa = p.patternAnalysis;
+            html += '<div class="report-section"><h4>📊 错题模式分析</h4>';
+            if (pa.errorTypeDistribution) {
+                var entries = Object.entries(pa.errorTypeDistribution).filter(function(e) { return e[1] > 0; }).sort(function(a,b) { return b[1]-a[1]; });
+                if (entries.length > 0) {
+                    var maxVal = entries[0][1];
+                    html += '<div class="chart">';
+                    entries.forEach(function(e) {
+                        var pct = Math.round((e[1] / maxVal) * 100);
+                        html += '<div class="chart-row"><span class="chart-label">' + esc(e[0]) + '</span><div class="chart-bar-wrap"><div class="chart-bar" style="width:' + pct + '%"></div></div><span class="chart-val">' + e[1] + '</span></div>';
+                    });
+                    html += '</div>';
+                }
+            }
+            if (pa.patternSummary) html += '<div class="chart-summary">' + esc(pa.patternSummary) + '</div>';
+            if (pa.topErrors && pa.topErrors.length > 0) {
+                html += '<div class="top-errors">';
+                pa.topErrors.slice(0, 3).forEach(function(te) { html += '<span class="top-error-chip">' + esc(te.errorType || '') + ' ' + (te.count || 0) + '次 (' + (te.percentage || 0) + '%)</span>'; });
+                html += '</div>';
+            }
+            html += '</div>';
+        }
+
+        if (p.questionAnalyses && p.questionAnalyses.length > 0) {
+            html += '<div class="report-section"><h4>🔍 逐题精析</h4>';
+            p.questionAnalyses.forEach(function(qa) {
+                var diffColors = { easy: '#16a34a', medium: '#f59e0b', hard: '#dc2626' };
+                var diffLabels = { easy: '易', medium: '中', hard: '难' };
+                var diffHtml = qa.difficulty ? '<span class="difficulty-chip" style="background:' + (diffColors[qa.difficulty] || '#6b7280') + '">' + esc(diffLabels[qa.difficulty] || qa.difficulty) + '</span>' : '';
+                var labelsHtml = (qa.labels || []).map(function(l) { return '<span class="label-chip">' + esc(l) + '</span>'; }).join('');
+                html += '<div class="question-card">';
+                html += '<div class="question-header"><span class="q-id">' + esc(qa.questionId || '') + '</span><span class="q-type">' + esc(qa.questionType || '') + '</span>' + diffHtml + '</div>';
+                html += '<div class="q-answers"><span class="q-user">你的答案: <strong>' + esc(qa.userAnswer || '') + '</strong></span><span class="q-correct">正确答案: <strong>' + esc(qa.correctAnswer || '') + '</strong></span></div>';
+                html += '<div class="q-labels">' + labelsHtml + '</div>';
+                html += '<div class="q-analysis">' + esc(qa.analysis || '') + '</div>';
+                if (qa.originalSentence) html += '<div class="q-original">📖 原文关键句: ' + esc(qa.originalSentence) + '</div>';
+                if (qa.tip) html += '<div class="q-tip">💡 技巧: ' + esc(qa.tip) + '</div>';
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+
+        if (p.weakPoints && p.weakPoints.length > 0) {
+            html += '<div class="report-section"><h4>⚠️ 薄弱点诊断</h4>';
+            p.weakPoints.forEach(function(wp) {
+                var sevClass = 'severity--' + (wp.severity || 'medium');
+                var qRefs = (wp.affectedQuestions || []).map(function(q) { return esc(q); }).join(', ');
+                html += '<div class="weak-point">';
+                html += '<div class="wp-header"><span class="severity ' + sevClass + '">' + esc(wp.severity || 'medium') + '</span><span class="wp-point">' + esc(wp.point || '') + '</span></div>';
+                html += '<div class="wp-desc">' + esc(wp.description || '') + '</div>';
+                if (wp.rootCause) html += '<div class="wp-root">根因: ' + esc(wp.rootCause) + '</div>';
+                if (wp.impact) html += '<div class="wp-impact">影响: ' + esc(wp.impact) + '</div>';
+                if (qRefs) html += '<div class="wp-refs">涉及题号: ' + qRefs + '</div>';
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+
+        if (p.studyPlan) {
+            var sp = p.studyPlan;
+            html += '<div class="report-section"><h4>📅 分阶段提升计划</h4>';
+            var phases = [
+                { key: 'shortTerm', label: '🏃 短期', period: sp.shortTerm },
+                { key: 'midTerm', label: '📈 中期', period: sp.midTerm },
+                { key: 'longTerm', label: '🎯 长期', period: sp.longTerm }
+            ];
+            phases.forEach(function(phase) {
+                var plan = phase.period;
+                if (!plan) return;
+                html += '<div class="plan-phase">';
+                html += '<div class="plan-header">' + phase.label + ' (' + esc(plan.period || '') + ')</div>';
+                if (plan.goals && plan.goals.length > 0) {
+                    html += '<div class="plan-goals">' + plan.goals.map(function(g) { return '<span class="plan-goal">✓ ' + esc(g) + '</span>'; }).join('') + '</div>';
+                }
+                if (plan.actions && plan.actions.length > 0) {
+                    html += '<div class="plan-actions">' + plan.actions.map(function(a) { return '<span class="plan-action">→ ' + esc(a) + '</span>'; }).join('') + '</div>';
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+
+        if (p.suggestions && p.suggestions.length > 0) {
+            html += '<div class="report-section"><h4>💡 改进建议</h4>';
+            p.suggestions.forEach(function(s) {
+                var priColors = { high: '#dc2626', medium: '#f59e0b', low: '#6b7280' };
+                var priHtml = s.priority ? '<span class="priority-chip" style="background:' + (priColors[s.priority] || '#6b7280') + '">' + esc(s.priority) + '</span>' : '';
+                html += '<div class="suggestion">';
+                html += priHtml;
+                html += '<div class="sug-target">针对: ' + esc(s.target || '') + '</div>';
+                html += '<div class="sug-method">方法: ' + esc(s.method || '') + '</div>';
+                html += '<div class="sug-dir">方向: ' + esc(s.direction || '') + '</div>';
+                if (s.notes) html += '<div class="sug-notes">注意: ' + esc(s.notes) + '</div>';
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    function loadFromIndexedDB() {
+        return new Promise(function(resolve, reject) {
+            var request = indexedDB.open('ielts_wrongbook_analysis', 1);
+            request.onupgradeneeded = function(e) {
+                var db = e.target.result;
+                if (!db.objectStoreNames.contains('analysis_results')) {
+                    db.createObjectStore('analysis_results', { keyPath: 'examId' });
+                }
+            };
+            request.onsuccess = function(e) {
+                var db = e.target.result;
+                var tx = db.transaction('analysis_results', 'readonly');
+                var store = tx.objectStore('analysis_results');
+                var req = store.get(examId);
+                req.onsuccess = function() { resolve(req.result || null); };
+                req.onerror = function() { resolve(null); };
+            };
+            request.onerror = function() { resolve(null); };
+        });
+    }
+
+    function showError(msg) {
+        document.getElementById('report-content').innerHTML = '<div class="error-box"><p>' + esc(msg) + '</p><button class="retry-btn" onclick="location.reload()">重试</button></div>';
+    }
+
+    loadFromIndexedDB().then(function(result) {
+        if (!result || !result.parsed) {
+            showError('未找到分析数据，请先在错题页面点击 AI 分析');
+            return;
+        }
+        document.getElementById('report-content').innerHTML = renderReport(result.parsed);
+        document.title = (isAll ? '全部错题综合分析' : (result.parsed.summary && result.parsed.summary.examCount > 1 ? '综合分析' : 'AI 分析')) + ' - HONGHU YASI';
+    }).catch(function(err) {
+        showError('加载失败: ' + (err.message || '未知错误'));
+    });
+})();
+</script>
+</body>
+</html>
