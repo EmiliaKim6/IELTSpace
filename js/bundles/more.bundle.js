@@ -4555,8 +4555,8 @@
         overlay.id = 'vocab-onboarding-overlay';
         overlay.style.cssText = 'position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;';
         overlay.innerHTML = '<div class="vocab-onboarding">' +
-            '<h3>👋 欢迎使用 HONGHU YASI 单词学习系统</h3>' +
-            '<p>这是 HONGHU YASI 的专属雅思词汇学习助手，帮助你高效记忆和巩固单词。</p>' +
+            '<h3>👋 欢迎使用 IELTSpace 单词学习系统</h3>' +
+            '<p>这是 IELTSpace 的专属雅思词汇学习助手，帮助你高效记忆和巩固单词。</p>' +
             '<ul class="onboarding-tips">' +
             '<li>🧠 <strong>记忆</strong>：使用SM-2间隔重复算法，科学安排复习时间</li>' +
             '<li>📝 <strong>测试</strong>：5种题型检验掌握程度，错词自动反馈</li>' +

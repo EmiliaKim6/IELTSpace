@@ -278,7 +278,7 @@ body {
             return;
         }
         document.getElementById('report-content').innerHTML = renderReport(result.parsed);
-        document.title = (isAll ? '全部错题综合分析' : (result.parsed.summary && result.parsed.summary.examCount > 1 ? '综合分析' : 'AI 分析')) + ' - HONGHU YASI';
+        document.title = (isAll ? '全部错题综合分析' : (result.parsed.summary && result.parsed.summary.examCount > 1 ? '综合分析' : 'AI 分析')) + ' - IELTSpace';
     }).catch(function(err) {
         showError('加载失败: ' + (err.message || '未知错误'));
     });

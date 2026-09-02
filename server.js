@@ -174,7 +174,7 @@ server.on('error', (err) => {
 server.listen(PORT, () => {
   console.log('');
   console.log('  ========================================');
-    console.log('    HONGHU YASI Server');
+    console.log('    IELTSpace Server');
   console.log('    http://localhost:' + PORT);
   console.log('    API Proxy: /api/proxy/* -> ' + API_TARGET + '/*');
   console.log('  ========================================');
